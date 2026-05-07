@@ -85,6 +85,14 @@ versions are flagged under *Open questions*.
     conclusions hold under any env that satisfies the rung's
     facts and validates its undefeated rules. Proof: induction
     over the derivation.
+  - `Tower.ConclAt_succ_of_empty`: one-step stabilization — if no
+    new facts or defeaters are admitted at rung n+1, conclusions
+    at rung n+1 coincide with conclusions at rung n.
+  - `Tower.tower_stabilizes`: **secondary metatheorem.** If the
+    tower admits no facts or defeaters past rung K, the conclusion
+    sequence is constant from K onward. Proof: induction on n
+    using the one-step stabilization. The "limit reasoner" of the
+    keynote framing is the rung-K reasoner.
 
 - **`Defeater/Demo.lean`** — Tweety, end-to-end.
   - `tweetyEnv`: the standard env (rocket-strapped penguin).
@@ -97,8 +105,11 @@ versions are flagged under *Open questions*.
   - `rung0_concludes_flies`: `Tower.ConclAt tweetyTower 0 "flies"`.
   - `rung1_no_flies`: `¬ Tower.ConclAt tweetyTower 1 "flies"`.
   - `rung2_concludes_flies`: `Tower.ConclAt tweetyTower 2 "flies"`.
+  - `tweety_rung2_sound`: `rung_sound` applied to the demo —
+    every conclusion at rung 2 holds under `tweetyEnv`. The
+    metatheorem instantiated end-to-end.
 
-- **`Defeater/Counter.lean`** — non-monotonicity witnesses.
+- **`Defeater/Counter.lean`** — non-monotonicity and stability.
   - `flies_oscillates`: the three demo theorems packaged as a
     single witness that `flies` is concluded, then not, then again.
   - `descent_witness` / `ascent_witness`: existential statements
@@ -106,6 +117,9 @@ versions are flagged under *Open questions*.
   - `conclusions_not_monotone`: the conclusion-set function is
     not monotone in the rung index — the syntactic proof that
     defeaters are doing real semantic work.
+  - `tweetyTower_stabilizes`: a corollary of `tower_stabilizes`
+    instantiated for the Tweety tower — conclusions are constant
+    from rung 2 onward.
 
 ## Headline picture
 
@@ -171,9 +185,11 @@ keynote can cite the artifact while leaving room to redesign:
   for §4.1 of the keynote: the limit reasoner's equational theory
   is exactly the strict-rule fragment, with all defeasible content
   reduced to its surviving instances.
-- **`tower_stabilizes` under what conditions?** Not yet proved.
-  Finite total height suffices trivially; well-founded defeat
-  ordering should also suffice.
+- **Stabilization beyond finite height.** `tower_stabilizes` shows
+  the conclusion sequence stabilizes when admissions cease. A
+  generalization to well-founded defeater ordering (no infinite
+  descent of defeaters-of-defeaters) — without requiring all
+  admissions to cease at a finite rung — is open.
 - **What does an LLM proposer look like for this artifact?** The
   kernel checks `defeats : env trigger → ... → ¬ env concl`. The
   proposer's job is to propose `(rule, trigger, undercutters,

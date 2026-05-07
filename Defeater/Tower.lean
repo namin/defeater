@@ -122,6 +122,112 @@ theorem rung_sound {T : Tower env} {n : Nat}
   | rule r hr hund _ ih =>
     exact hrules r hr hund (fun p hp => ih p hp)
 
+/-! ## Stabilization
+
+  When the tower has finite total height — i.e., no facts or
+  defeaters are admitted past some rung K — the conclusion sequence
+  `ConclAt T 0, ConclAt T 1, …` stabilizes at rung K. The "limit
+  reasoner" coincides with the rung-K reasoner.
+
+  Proof structure: empty admissions at rung n+1 leave factsUpTo,
+  defsUpTo, fires, and isUndefeated unchanged from rung n; therefore
+  ConclAt is the same inductive predicate; therefore conclusions are
+  unchanged. Iterate.
+-/
+
+theorem factsUpTo_succ_of_empty {T : Tower env} {n : Nat}
+    (hF : T.facts (n+1) = []) :
+    T.factsUpTo (n+1) = T.factsUpTo n := by
+  show T.factsUpTo n ++ T.facts (n+1) = T.factsUpTo n
+  rw [hF]; simp
+
+theorem defsUpTo_succ_of_empty {T : Tower env} {n : Nat}
+    (hD : T.defs (n+1) = []) :
+    T.defsUpTo (n+1) = T.defsUpTo n := by
+  show T.defsUpTo n ++ T.defs (n+1) = T.defsUpTo n
+  rw [hD]; simp
+
+end Tower
+
+theorem SoundDefeater.fires_succ_of_empty {env : Env} {T : Tower env} {n : Nat}
+    (hF : T.facts (n+1) = []) (d : SoundDefeater env) :
+    d.fires T (n+1) ↔ d.fires T n := by
+  show (d.trigger ∈ T.factsUpTo (n+1) ∧ ∀ u ∈ d.undercutters, u ∉ T.factsUpTo (n+1))
+     ↔ (d.trigger ∈ T.factsUpTo n ∧ ∀ u ∈ d.undercutters, u ∉ T.factsUpTo n)
+  rw [Tower.factsUpTo_succ_of_empty hF]
+
+namespace Tower
+
+variable {env : Env}
+
+theorem isUndefeated_succ_of_empty {T : Tower env} {n : Nat}
+    (hF : T.facts (n+1) = []) (hD : T.defs (n+1) = []) (r : DefRule) :
+    T.isUndefeated (n+1) r ↔ T.isUndefeated n r := by
+  show (∀ d ∈ T.defsUpTo (n+1), d.rule = r → ¬ d.fires T (n+1))
+     ↔ (∀ d ∈ T.defsUpTo n, d.rule = r → ¬ d.fires T n)
+  rw [defsUpTo_succ_of_empty hD]
+  constructor
+  · intro h d hd hdr hf
+    exact h d hd hdr ((SoundDefeater.fires_succ_of_empty hF d).mpr hf)
+  · intro h d hd hdr hf
+    exact h d hd hdr ((SoundDefeater.fires_succ_of_empty hF d).mp hf)
+
+/-- One-step stabilization: if no new facts or defeaters are admitted
+    at rung n+1, conclusions at rung n+1 coincide with conclusions at
+    rung n. -/
+theorem ConclAt_succ_of_empty {T : Tower env} {n : Nat}
+    (hF : T.facts (n+1) = []) (hD : T.defs (n+1) = []) :
+    ∀ a, ConclAt T (n+1) a ↔ ConclAt T n a := by
+  intro a
+  constructor
+  · intro h
+    induction h with
+    | fact hmem =>
+      apply ConclAt.fact
+      rwa [factsUpTo_succ_of_empty hF] at hmem
+    | rule r hr hund _hp ih =>
+      apply ConclAt.rule r hr
+      · exact (isUndefeated_succ_of_empty hF hD r).mp hund
+      · exact ih
+  · intro h
+    induction h with
+    | fact hmem =>
+      apply ConclAt.fact
+      rwa [factsUpTo_succ_of_empty hF]
+    | rule r hr hund _hp ih =>
+      apply ConclAt.rule r hr
+      · exact (isUndefeated_succ_of_empty hF hD r).mpr hund
+      · exact ih
+
+/-- **Tower stabilization.** If the tower admits no facts or defeaters
+    past rung K, the conclusion sequence is constant from rung K
+    onward. The "limit reasoner" is the rung-K reasoner.
+
+    This is the secondary metatheorem promised in the README: it
+    grounds the keynote's framing of "the limit reasoner is the
+    maximally-informed one" — once admissions stop, the conclusion
+    set is fixed. -/
+theorem tower_stabilizes {T : Tower env} (K : Nat)
+    (hF : ∀ k, K < k → T.facts k = [])
+    (hD : ∀ k, K < k → T.defs k = []) :
+    ∀ n, K ≤ n → ∀ a, ConclAt T n a ↔ ConclAt T K a := by
+  intro n
+  induction n with
+  | zero =>
+    intro hn
+    have : K = 0 := Nat.le_zero.mp hn
+    subst this
+    intro a; rfl
+  | succ m ih =>
+    intro hn a
+    rcases Nat.eq_or_lt_of_le hn with hEq | hLt
+    · subst hEq; rfl
+    · have hKm : K ≤ m := Nat.lt_succ_iff.mp hLt
+      have hF_m1 : T.facts (m+1) = [] := hF (m+1) (Nat.lt_succ_of_le hKm)
+      have hD_m1 : T.defs (m+1) = [] := hD (m+1) (Nat.lt_succ_of_le hKm)
+      rw [ConclAt_succ_of_empty hF_m1 hD_m1 a]
+      exact ih hKm a
+
 end Tower
 
 end Defeater

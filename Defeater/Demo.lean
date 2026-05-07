@@ -188,5 +188,54 @@ theorem rung2_concludes_flies :
     | head _ => simp
     | tail _ h => cases h
 
+/-! ## Applying `rung_sound` to the Tweety tower
+
+  The metatheorem in Tower.lean is conditional on env satisfying the
+  facts and validating undefeated rules. Both hold for tweetyEnv on
+  tweetyTower; we discharge them and instantiate the headline at
+  every rung. -/
+
+/-- tweetyEnv satisfies every fact admitted in tweetyTower (at any
+    rung up through 2). -/
+theorem tweetyEnv_satisfies_factsUpTo_2 :
+    ∀ a ∈ Tower.factsUpTo tweetyTower 2, tweetyEnv a := by
+  intro a ha
+  rw [factsUpTo_2] at ha
+  simp at ha
+  rcases ha with rfl | rfl | rfl
+  · exact Or.inl rfl
+  · exact Or.inr (Or.inl rfl)
+  · exact Or.inr (Or.inr (Or.inl rfl))
+
+/-- The bird-flight rule is valid under tweetyEnv: when bird holds,
+    flies holds. -/
+theorem birdFliesRule_valid : birdFliesRule.validUnder tweetyEnv := by
+  intro _hprems
+  exact Or.inr (Or.inr (Or.inr rfl))
+
+/-- All rules in tweetyTower validate under tweetyEnv whenever
+    they're undefeated. (In fact, the only rule is birdFliesRule and
+    it's always valid under tweetyEnv — the undefeated hypothesis
+    isn't needed for this env.) -/
+theorem tweetyTower_undefeated_valid :
+    ∀ r ∈ tweetyTower.rules,
+      tweetyTower.isUndefeated 2 r → r.validUnder tweetyEnv := by
+  intro r hr _hund
+  cases hr with
+  | head _ => exact birdFliesRule_valid
+  | tail _ h => cases h
+
+/-- The headline metatheorem applied to the rocket-strapped Tweety
+    scenario: every conclusion at rung 2 holds in tweetyEnv. The
+    proof is `Tower.rung_sound` instantiated with the discharged
+    hypotheses above. -/
+theorem tweety_rung2_sound :
+    ∀ a, Tower.ConclAt tweetyTower 2 a → tweetyEnv a := by
+  intro a hca
+  exact Tower.rung_sound
+    tweetyEnv_satisfies_factsUpTo_2
+    tweetyTower_undefeated_valid
+    hca
+
 end Demo
 end Defeater

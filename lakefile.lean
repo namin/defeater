@@ -9,3 +9,6 @@ package «defeater» where
 @[default_target]
 lean_lib «Defeater» where
   srcDir := "."
+
+lean_exe «smoke» where
+  root := `Smoke

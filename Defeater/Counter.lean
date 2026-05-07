@@ -54,5 +54,29 @@ theorem conclusions_not_monotone :
         Tower.ConclAt tweetyTower m a ∧ ¬ Tower.ConclAt tweetyTower n a :=
   ⟨0, 1, by decide, "flies", rung0_concludes_flies, rung1_no_flies⟩
 
+/-- The Tweety tower has finite total height: nothing is admitted
+    past rung 2. -/
+theorem tweetyTower_facts_empty_past_2 :
+    ∀ k, 2 < k → tweetyTower.facts k = [] := by
+  intro k hk
+  match k, hk with
+  | _ + 3, _ => rfl
+
+theorem tweetyTower_defs_empty_past_2 :
+    ∀ k, 2 < k → tweetyTower.defs k = [] := by
+  intro k hk
+  match k, hk with
+  | _ + 3, _ => rfl
+
+/-- Tweety's conclusion sequence stabilizes at rung 2: the limit
+    reasoner is the rung-2 reasoner. A direct application of the
+    general `tower_stabilizes` metatheorem to this concrete tower. -/
+theorem tweetyTower_stabilizes :
+    ∀ n, 2 ≤ n → ∀ a,
+      Tower.ConclAt tweetyTower n a ↔ Tower.ConclAt tweetyTower 2 a :=
+  Tower.tower_stabilizes 2
+    tweetyTower_facts_empty_past_2
+    tweetyTower_defs_empty_past_2
+
 end Counter
 end Defeater
