@@ -24,7 +24,7 @@ abbrev Atom := String
 structure DefRule where
   prems : List Atom
   concl : Atom
-  deriving Repr
+  deriving Repr, DecidableEq
 
 /-- An environment maps atoms to metalanguage propositions. The
     "standard interpretation" of the object substrate. -/

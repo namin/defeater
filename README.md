@@ -121,6 +121,41 @@ versions are flagged under *Open questions*.
     instantiated for the Tweety tower — conclusions are constant
     from rung 2 onward.
 
+- **`Defeater/Reflection.lean`** — reflective defeater semantics.
+  - `Closure rules active facts`: ungated forward-chaining gated
+    by an `active` predicate. The shared inductive scaffolding for
+    both syntactic and reflective semantics.
+  - `Closure.sound`: every closed atom holds under any env that
+    satisfies the facts and validates active rules.
+  - `Tower.ReflConclAt T n`: *reflective* derivability — defined by
+    structural recursion on `n` so the body for `n+1` references
+    only `ReflConclAt T n` (sidesteps negative-occurrence). At rung 0
+    no defeaters fire (no prior stage); at rung n+1 a defeater fires
+    when its trigger was *concluded* at rung n.
+  - `Tower.isUndefeatedRefl`: standalone form of the reflective
+    undefeated predicate.
+  - `Tower.reflConclAt_eq`: `ReflConclAt T n = Closure under isUndefeatedRefl`.
+  - `Tower.refl_rung_sound`: **reflective per-rung soundness** —
+    same shape as `rung_sound`, with reflective firing.
+
+- **`Defeater/ReflDemo.lean`** — reflective Tweety, end-to-end.
+  - Two rules: `bird ⇒ flies`, `penguin ⇒ cantFly`.
+  - `cantFlyDefeater`: targets `bird ⇒ flies`, trigger `cantFly`.
+    The trigger is *derived* (not asserted) — it appears in the
+    rung-0 conclusion set via `penguin ⇒ cantFly`.
+  - `rung0_concludes_flies` / `rung0_concludes_cantFly`: rung 0
+    is the unconstrained baseline; both rules fire.
+  - `rung1_no_flies`: at rung 1 the defeater fires *reflectively*
+    on the rung-0 inference of `cantFly`; `bird ⇒ flies` is
+    defeated; `flies` is not concluded.
+  - `rung1_concludes_cantFly`: defeating one rule doesn't disturb
+    others; `penguin ⇒ cantFly` stays active.
+
+  This is the keynote thesis instantiated literally: the upper rung
+  observes the lower rung's *inferences* and intervenes. The
+  syntactic version of Tweety can't tell this story — its defeater
+  fires on a primitive assertion; here the trigger is a derivation.
+
 ## Headline picture
 
 ```
@@ -169,12 +204,19 @@ keynote can cite the artifact while leaving room to redesign:
   encode contingent defaults, so the certificate holds in a
   specific semantic universe. The kernel discipline transfers; the
   certificate's universe of discourse narrows.
-- **Syntactic firing.** A defeater fires when its trigger is among
-  the *asserted* facts at its rung, not when its trigger is
-  *derived*. This sidesteps the negative-occurrence problem in the
-  inductive definition of `ConclAt` and keeps the demo concrete.
-  Derived-trigger defeating is a natural extension; it would
-  require stratified fixpoints rather than a clean inductive.
+- **Two firing semantics.** Two flavors of defeater firing coexist:
+  - *Syntactic* (`Tower.ConclAt`, `Tower.fires`): a defeater fires
+    when its trigger is among the *asserted* facts at its rung. A
+    clean inductive, but degenerate — defeasible logic in name only.
+  - *Reflective* (`Tower.ReflConclAt`): a defeater fires when its
+    trigger was *concluded* at the prior rung (Pollock-style,
+    canonical defeasible logic). Stratified by rung to sidestep the
+    negative-occurrence problem in the inductive definition.
+
+  Both semantics share `Closure` and the per-rung-soundness shape;
+  the difference is what the firing predicate observes. The keynote
+  pitch — "an upper rung reasoning about a lower rung's inferences"
+  — is realized by the reflective semantics.
 - **Undercutters as direct-attached.** A defeater carries its own
   list of undercutter atoms. Defeater-of-defeaters via separate
   meta-defeaters (Pollockian) is a richer alternative.
