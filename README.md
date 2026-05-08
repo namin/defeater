@@ -156,6 +156,25 @@ versions are flagged under *Open questions*.
   syntactic version of Tweety can't tell this story — its defeater
   fires on a primitive assertion; here the trigger is a derivation.
 
+- **`Defeater/Oscillate.lean`** — reflective non-stabilization
+  counterexample.
+  - Rules: `z ⇒ x` and `x ⇒ y`. A defeater of `x ⇒ y` triggered by
+    `y` (the rule's own conclusion). All admissions at rung 0.
+  - `rung0_concludes_y`: baseline closure derives `y`.
+  - `rung1_no_y`: defeater fires reflectively on the rung-0
+    inference of `y`; `x ⇒ y` is defeated.
+  - `rung2_concludes_y`: defeater doesn't fire (since `y ∉ ReflConclAt 1`);
+    `x ⇒ y` is undefeated again; `y` is re-derived.
+  - `reflective_oscillation`: the period-2 witness.
+
+  No new admissions happen past rung 0 — yet the conclusion sequence
+  oscillates forever. The syntactic stabilization theorem
+  (`Tower.tower_stabilizes`) does *not* lift unconditionally to the
+  reflective layer. The active predicate's dependence on prior-rung
+  conclusions creates feedback loops that syntactic firing cannot
+  produce. This is the structural distinction the keynote's
+  reflection thesis predicts.
+
 ## Headline picture
 
 ```
@@ -227,11 +246,13 @@ keynote can cite the artifact while leaving room to redesign:
   for §4.1 of the keynote: the limit reasoner's equational theory
   is exactly the strict-rule fragment, with all defeasible content
   reduced to its surviving instances.
-- **Stabilization beyond finite height.** `tower_stabilizes` shows
-  the conclusion sequence stabilizes when admissions cease. A
-  generalization to well-founded defeater ordering (no infinite
-  descent of defeaters-of-defeaters) — without requiring all
-  admissions to cease at a finite rung — is open.
+- **When does the reflective sequence stabilize?** The syntactic
+  `tower_stabilizes` lifts unconditionally; the reflective version
+  doesn't (see `Oscillate.lean`). A natural conditional theorem:
+  *if no rule's conclusion is a defeater trigger, the reflective
+  sequence stabilizes once admissions cease.* The general case —
+  characterizing exactly when reflection terminates — is the
+  defeasible-logic analog of Beklemishev's ordinal analysis.
 - **What does an LLM proposer look like for this artifact?** The
   kernel checks `defeats : env trigger → ... → ¬ env concl`. The
   proposer's job is to propose `(rule, trigger, undercutters,

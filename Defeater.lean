@@ -4,3 +4,4 @@ import Defeater.Reflection
 import Defeater.Demo
 import Defeater.ReflDemo
 import Defeater.Counter
+import Defeater.Oscillate
