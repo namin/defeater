@@ -156,6 +156,24 @@ versions are flagged under *Open questions*.
   syntactic version of Tweety can't tell this story — its defeater
   fires on a primitive assertion; here the trigger is a derivation.
 
+- **`Defeater/Trust.lean`** — a trust hierarchy / source-credibility
+  cascade. The rung index is *not* admission order here — it's an
+  *authority lattice*. Rung n+1 is strictly more authoritative than
+  rung n; admitting a defeater at rung n+1 means "a higher-ranked
+  source has spoken, defeating a lower-ranked source's default."
+  - Three sources: junior witness, senior witness, forensic.
+  - At rung 0: `redCoat` (junior's claim).
+  - At rung 1: `blueCoat` (senior outranks junior; junior's claim
+    defeated).
+  - At rung 2: `greenCoat` (forensic outranks senior; both lower
+    claims defeated).
+  - `trust_cascade`: the conclusion shifts as we ascend.
+
+  The case study makes the rung index *do real semantic work*:
+  level structure becomes the authority lattice, not just the order
+  of admission. Same kernel discipline; new interpretation of the
+  tower.
+
 - **`Defeater/Nixon.lean`** — the Nixon Diamond (the textbook
   example of *symmetric* defeasible conflict since Reiter).
   - Two rules: `Quaker ⇒ pacifist`, `Republican ⇒ nonpacifist`.
