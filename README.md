@@ -321,3 +321,7 @@ keynote can cite the artifact while leaving room to redesign:
   defeats-proof)` quadruples; the gate type-checks the proof. A
   next step is wiring this into a proposer-LLM cascade analogous
   to climber's runner.
+
+## Acknowledgements
+
+[Will Byrd](https://github.com/webyrd) suggested a reflective tower around defeasible logic.
