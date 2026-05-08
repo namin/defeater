@@ -251,5 +251,85 @@ theorem reflective_oscillation :
     Tower.ReflConclAt oscTower 2 "y" :=
   ⟨rung0_concludes_y, rung1_no_y, rung2_concludes_y⟩
 
+/-! ## Period-2 forever, by induction
+
+  The three-rung witness above suggests a period-2 pattern. The
+  step lemmas below generalize `rung1_no_y` and `rung2_concludes_y`
+  to arbitrary rungs, and the parity theorem proves the pattern
+  holds for every k by induction.
+-/
+
+/-- **Step down**: if `y` is concluded at rung n, the defeater
+    fires reflectively at rung n+1, defeating `R'`; `y` is not
+    concluded at rung n+1. -/
+theorem osc_step_down (n : Nat) (hY : Tower.ReflConclAt oscTower n "y") :
+    ¬ Tower.ReflConclAt oscTower (n + 1) "y" := by
+  intro hc
+  rw [Tower.reflConclAt_eq] at hc
+  suffices h : ∀ a,
+      Closure oscTower.rules (Tower.isUndefeatedRefl oscTower (n + 1))
+        (Tower.factsUpTo oscTower (n + 1)) a → a ≠ "y" by
+    exact h "y" hc rfl
+  intro a hca
+  induction hca with
+  | fact hmem =>
+    intro hEq
+    subst hEq
+    rw [osc_factsUpTo_eq] at hmem
+    exact absurd hmem (by decide)
+  | rule r hr hact _hp _ih =>
+    cases hr with
+    | head _ => decide
+    | tail _ h =>
+      cases h with
+      | head _ =>
+        intro _hEq
+        apply hact yDefeater
+          (by rw [osc_defsUpTo_eq]; exact List.Mem.head _)
+          rfl
+        refine ⟨hY, ?_⟩
+        intro u hu; cases hu
+      | tail _ h' => cases h'
+
+/-- **Step up**: if `y` is not concluded at rung n, the defeater
+    doesn't fire at rung n+1, `R'` is undefeated, and `y` is
+    re-derived. -/
+theorem osc_step_up (n : Nat) (hNotY : ¬ Tower.ReflConclAt oscTower n "y") :
+    Tower.ReflConclAt oscTower (n + 1) "y" := by
+  rw [Tower.reflConclAt_eq]
+  apply Closure.rule ruleR'
+  · show ruleR' ∈ [ruleR, ruleR']
+    exact List.Mem.tail _ (List.Mem.head _)
+  · intro d hd _hdr
+    rw [osc_defsUpTo_eq] at hd
+    have : d = yDefeater := by
+      cases hd with | head _ => rfl | tail _ h => cases h
+    subst this
+    intro ⟨hY, _⟩
+    exact hNotY hY
+  · intro p hp
+    cases hp with
+    | head _ => exact any_concludes_x_cl (n + 1)
+    | tail _ h => cases h
+
+/-- **Period-2 parity, every rung.** For every `k`, `y` is concluded
+    at rung `2k` and not concluded at rung `2k+1`. The 3-rung
+    witness lifted to a ∀-theorem; the conclusion sequence really
+    does oscillate forever, not just for the first few rungs. -/
+theorem osc_parity : ∀ k,
+    Tower.ReflConclAt oscTower (2 * k) "y" ∧
+    ¬ Tower.ReflConclAt oscTower (2 * k + 1) "y" := by
+  intro k
+  induction k with
+  | zero => exact ⟨rung0_concludes_y, rung1_no_y⟩
+  | succ m ih =>
+    have h_up : Tower.ReflConclAt oscTower (2 * (m + 1)) "y" := by
+      have h_eq : 2 * (m + 1) = 2 * m + 1 + 1 := by omega
+      rw [h_eq]
+      exact osc_step_up _ ih.2
+    have h_down : ¬ Tower.ReflConclAt oscTower (2 * (m + 1) + 1) "y" :=
+      osc_step_down _ h_up
+    exact ⟨h_up, h_down⟩
+
 end Oscillate
 end Defeater

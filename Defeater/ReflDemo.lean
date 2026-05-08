@@ -178,5 +178,80 @@ theorem rung1_concludes_cantFly :
       exact List.Mem.tail _ (List.Mem.head _)
     | tail _ h => cases h
 
+/-! ## End-to-end soundness via the bridge theorem
+
+  Here the certificates *earn their keep*: `birdFliesRule` is
+  *invalid* under `reflEnv` (env "bird" = T, env "flies" = F), and
+  the coverage condition at rung 1 produces the cantFlyDefeater as
+  its firing witness. Combined with `refl_undefeated_valid_under_coverage`
+  and `refl_rung_sound`, this yields end-to-end soundness without
+  postulating rule-validity by hand. -/
+
+/-- `reflEnv` satisfies the facts admitted up through rung 1. -/
+theorem reflEnv_satisfies_factsUpTo_1 :
+    ∀ a ∈ Tower.factsUpTo reflTower 1, reflEnv a := by
+  intro a ha
+  rw [refl_factsUpTo_1] at ha
+  cases ha with
+  | head _ => trivial
+  | tail _ h =>
+    cases h with
+    | head _ => trivial
+    | tail _ h' => cases h'
+
+/-- `birdFliesRule` is *not* valid under `reflEnv`: env "bird" holds
+    but env "flies" doesn't. The defeasible rule fails its semantic
+    test in this env. -/
+theorem birdFliesRule_invalid : ¬ birdFliesRule.validUnder reflEnv := by
+  intro hvalid
+  -- Apply to the prems hypothesis (env "bird" = True) to get env "flies",
+  -- which reduces definitionally to False.
+  exact hvalid (fun p hp => by
+    cases hp with
+    | head _ => trivial
+    | tail _ h => cases h)
+
+/-- `penguinCantFlyRule` *is* valid under `reflEnv`: env "penguin" → env "cantFly". -/
+theorem penguinCantFlyRule_valid : penguinCantFlyRule.validUnder reflEnv := by
+  intro _; trivial
+
+/-- **Coverage at rung 1.** Every env-invalid rule has a reflectively
+    firing defeater. The only invalid rule is `birdFliesRule`, and
+    `cantFlyDefeater` targets it with trigger `cantFly`, which was
+    concluded at rung 0 via `penguinCantFlyRule`. -/
+theorem refl_coverage_at_rung_1 :
+    ∀ r ∈ reflTower.rules, ¬ r.validUnder reflEnv →
+      ∃ d ∈ Tower.defsUpTo reflTower 1,
+        d.rule = r ∧
+        Tower.ReflConclAt reflTower 0 d.trigger ∧
+        (∀ u ∈ d.undercutters, ¬ Tower.ReflConclAt reflTower 0 u) := by
+  intro r hr hinv
+  -- r ∈ [birdFliesRule, penguinCantFlyRule]; only birdFliesRule is invalid.
+  cases hr with
+  | head _ =>
+    -- r = birdFliesRule
+    refine ⟨cantFlyDefeater, ?_, rfl, rung0_concludes_cantFly, ?_⟩
+    · rw [refl_defsUpTo_1]; exact List.Mem.head _
+    · intro u hu; cases hu
+  | tail _ h =>
+    cases h with
+    | head _ =>
+      -- r = penguinCantFlyRule, but it IS valid — coverage hypothesis vacuous.
+      exact absurd penguinCantFlyRule_valid hinv
+    | tail _ h' => cases h'
+
+/-- **End-to-end rung-1 soundness for the reflective Tweety demo.**
+    Every conclusion at rung 1 holds in `reflEnv`. The certificates
+    do real work here: the `cantFlyDefeater`'s defeasibility
+    certificate, combined with the coverage condition, discharges
+    the validity hypothesis of `refl_rung_sound`. -/
+theorem reflDemo_rung1_sound :
+    ∀ a, Tower.ReflConclAt reflTower 1 a → reflEnv a := by
+  intro a hc
+  exact Tower.refl_rung_sound
+    reflEnv_satisfies_factsUpTo_1
+    (Tower.refl_undefeated_valid_under_coverage refl_coverage_at_rung_1)
+    hc
+
 end ReflDemo
 end Defeater

@@ -10,29 +10,31 @@ import Defeater.Reflection
     Republican ⇒ nonpacifist
     Nixon is both Quaker and Republican.
 
-  Standard defeasible-logic readings:
+  Standard defeasible-logic readings of this scenario:
   - *Skeptical*: conclude neither — the conflicting defaults block
     each other.
   - *Credulous*: there are two consistent extensions, one with
     pacifist, one with nonpacifist.
   - *Specificity-based*: if no priority order is given, neither wins.
 
-  Our minimal substrate has no priorities and no negation. We model
-  the conflict via two rules and two rebutting defeaters: each rule's
-  conclusion is the other defeater's trigger. Reflectively this is
-  the same shape as `Oscillate.lean` — the conclusion sequence
-  oscillates with period 2:
+  Our minimal substrate has no priorities, no negation, and no
+  formal extension semantics. We don't claim to instantiate the
+  skeptical or credulous readings literally; we model the conflict
+  via two rules and two rebutting defeaters (each rule's
+  conclusion is the other defeater's trigger), and the reflective
+  conclusion sequence oscillates with period 2:
 
-    rung 0:  both concluded (no defeaters fire — baseline)
-    rung 1:  neither concluded (each defeater fires reflectively
-             on the other rule's rung-0 conclusion)
-    rung 2:  both concluded again (neither was concluded at rung 1,
-             so no defeater fires; both rules undefeated)
+    rung 0:  both concluded (pre-defeat baseline)
+    rung 1:  neither concluded (post-defeat — each defeater fires
+             reflectively on the other rule's rung-0 conclusion)
+    rung 2:  both concluded again (rung-1's emptiness leaves both
+             rules undefeated)
+    ...
 
-  Skeptical reading lives at rung 1; credulous reading lives at
-  rung 0 (or rung 2). The framework refuses to choose. That refusal
-  IS the textbook content — Nixon Diamond is the canonical case
-  where defeasible logic has no preferred answer.
+  The framework's refusal to converge is what's textbook-recognizable
+  about Nixon Diamond — defeasible logic has no preferred answer
+  here. The parity theorem `nixon_parity` makes this period-2
+  oscillation a `∀ k` statement.
 -/
 
 namespace Defeater
@@ -214,33 +216,199 @@ theorem rung1_no_nonpacifist :
         cases hu
       | tail _ h' => cases h'
 
-/-- **Skeptical rung.** At rung 1 — the rung where reflective
-    defeating has fired — neither pacifist nor nonpacifist is
-    concluded. This is the *skeptical reading* of Nixon Diamond. -/
-theorem nixon_skeptical_at_rung1 :
+/-- **Post-defeat rung.** At rung 1 — the first rung where
+    reflective defeating fires — neither pacifist nor nonpacifist
+    is concluded; both rules have been mutually defeated.
+
+    Note: this is *not* the formal "skeptical extension" of
+    defeasible logic (which we don't have, lacking extension
+    semantics). It's the rung-1 conclusion set under our reflective
+    firing rule, which happens to coincide rhetorically with the
+    skeptical reading. -/
+theorem nixon_post_defeat_at_rung1 :
     ¬ Tower.ReflConclAt nixonTower 1 "pacifist" ∧
     ¬ Tower.ReflConclAt nixonTower 1 "nonpacifist" :=
   ⟨rung1_no_pacifist, rung1_no_nonpacifist⟩
 
-/-- **Credulous rung.** At rung 0 — the rung before reflective
-    defeating fires — both pacifist and nonpacifist are concluded.
-    This is the *credulous reading*: every consistent extension is
-    available, but no choice is forced. -/
-theorem nixon_credulous_at_rung0 :
+/-- **Pre-defeat baseline.** At rung 0 — before any reflective
+    defeating has fired — both pacifist and nonpacifist are
+    concluded; both defaults fire from the asserted facts.
+
+    Note: this is *not* the formal "credulous extension" — our
+    substrate has no object-level negation, so concluding both
+    `pacifist` and `nonpacifist` here is the both-defaults
+    baseline, not a choice between two consistent extensions. -/
+theorem nixon_baseline_at_rung0 :
     Tower.ReflConclAt nixonTower 0 "pacifist" ∧
     Tower.ReflConclAt nixonTower 0 "nonpacifist" :=
   ⟨rung0_concludes_pacifist, rung0_concludes_nonpacifist⟩
 
-/-- **Nixon Diamond doesn't converge.** The conclusion sequence
-    oscillates between the credulous and skeptical readings — at
-    even rungs both are concluded, at odd rungs neither is. The
-    framework's refusal to choose is structural, not accidental. -/
+/-- **Nixon Diamond doesn't converge.** Three rungs witnessed: at
+    rung 0 both are concluded, at rung 1 neither — and below we
+    extend this to a ∀-theorem over all parities. -/
 theorem nixon_diamond_irresolution :
     (Tower.ReflConclAt nixonTower 0 "pacifist" ∧
      Tower.ReflConclAt nixonTower 0 "nonpacifist") ∧
     (¬ Tower.ReflConclAt nixonTower 1 "pacifist" ∧
      ¬ Tower.ReflConclAt nixonTower 1 "nonpacifist") :=
-  ⟨nixon_credulous_at_rung0, nixon_skeptical_at_rung1⟩
+  ⟨nixon_baseline_at_rung0, nixon_post_defeat_at_rung1⟩
+
+/-! ## Period-2 forever, by induction
+
+  Step lemmas generalize the rung-0 and rung-1 theorems above to
+  arbitrary rungs; the parity theorem packages them as ∀ k.
+-/
+
+theorem any_concludes_quaker_cl (n : Nat) :
+    Closure nixonTower.rules (Tower.isUndefeatedRefl nixonTower n)
+      (Tower.factsUpTo nixonTower n) "quaker" := by
+  apply Closure.fact
+  rw [nixon_factsUpTo_eq]
+  exact List.Mem.head _
+
+theorem any_concludes_republican_cl (n : Nat) :
+    Closure nixonTower.rules (Tower.isUndefeatedRefl nixonTower n)
+      (Tower.factsUpTo nixonTower n) "republican" := by
+  apply Closure.fact
+  rw [nixon_factsUpTo_eq]
+  exact List.Mem.tail _ (List.Mem.head _)
+
+/-- Step down for `pacifist`: when `nonpacifist` was concluded at
+    rung n, the quaker-overriding defeater fires at rung n+1. -/
+theorem nixon_step_down_pacifist (n : Nat)
+    (hN : Tower.ReflConclAt nixonTower n "nonpacifist") :
+    ¬ Tower.ReflConclAt nixonTower (n + 1) "pacifist" := by
+  intro hc
+  rw [Tower.reflConclAt_eq] at hc
+  suffices h : ∀ a,
+      Closure nixonTower.rules (Tower.isUndefeatedRefl nixonTower (n + 1))
+        (Tower.factsUpTo nixonTower (n + 1)) a → a ≠ "pacifist" by
+    exact h "pacifist" hc rfl
+  intro a hca
+  induction hca with
+  | fact hmem =>
+    intro hEq
+    subst hEq
+    rw [nixon_factsUpTo_eq] at hmem
+    exact absurd hmem (by decide)
+  | rule r hr hact _hp _ih =>
+    cases hr with
+    | head _ =>
+      intro _hEq
+      apply hact quakerDefeater
+        (by rw [nixon_defsUpTo_eq]; exact List.Mem.head _)
+        rfl
+      refine ⟨hN, ?_⟩
+      intro u hu; cases hu
+    | tail _ h =>
+      cases h with
+      | head _ => decide
+      | tail _ h' => cases h'
+
+/-- Step down for `nonpacifist`: symmetric. -/
+theorem nixon_step_down_nonpacifist (n : Nat)
+    (hP : Tower.ReflConclAt nixonTower n "pacifist") :
+    ¬ Tower.ReflConclAt nixonTower (n + 1) "nonpacifist" := by
+  intro hc
+  rw [Tower.reflConclAt_eq] at hc
+  suffices h : ∀ a,
+      Closure nixonTower.rules (Tower.isUndefeatedRefl nixonTower (n + 1))
+        (Tower.factsUpTo nixonTower (n + 1)) a → a ≠ "nonpacifist" by
+    exact h "nonpacifist" hc rfl
+  intro a hca
+  induction hca with
+  | fact hmem =>
+    intro hEq
+    subst hEq
+    rw [nixon_factsUpTo_eq] at hmem
+    exact absurd hmem (by decide)
+  | rule r hr hact _hp _ih =>
+    cases hr with
+    | head _ => decide
+    | tail _ h =>
+      cases h with
+      | head _ =>
+        intro _hEq
+        apply hact republicanDefeater
+          (by rw [nixon_defsUpTo_eq]; exact List.Mem.tail _ (List.Mem.head _))
+          rfl
+        refine ⟨hP, ?_⟩
+        intro u hu; cases hu
+      | tail _ h' => cases h'
+
+/-- Step up for `pacifist`: when `nonpacifist` was NOT concluded at
+    rung n, the quaker-overriding defeater doesn't fire at rung n+1
+    and the rule is undefeated. -/
+theorem nixon_step_up_pacifist (n : Nat)
+    (hNotN : ¬ Tower.ReflConclAt nixonTower n "nonpacifist") :
+    Tower.ReflConclAt nixonTower (n + 1) "pacifist" := by
+  rw [Tower.reflConclAt_eq]
+  apply Closure.rule quakerRule
+  · show quakerRule ∈ [quakerRule, republicanRule]
+    exact List.Mem.head _
+  · intro d hd hdr
+    rw [nixon_defsUpTo_eq] at hd
+    cases hd with
+    | head _ =>
+      intro ⟨hN, _⟩
+      exact hNotN hN
+    | tail _ h =>
+      cases h with
+      | head _ => exact absurd hdr (by decide)
+      | tail _ h' => cases h'
+  · intro p hp
+    cases hp with
+    | head _ => exact any_concludes_quaker_cl (n + 1)
+    | tail _ h => cases h
+
+/-- Step up for `nonpacifist`: symmetric. -/
+theorem nixon_step_up_nonpacifist (n : Nat)
+    (hNotP : ¬ Tower.ReflConclAt nixonTower n "pacifist") :
+    Tower.ReflConclAt nixonTower (n + 1) "nonpacifist" := by
+  rw [Tower.reflConclAt_eq]
+  apply Closure.rule republicanRule
+  · show republicanRule ∈ [quakerRule, republicanRule]
+    exact List.Mem.tail _ (List.Mem.head _)
+  · intro d hd hdr
+    rw [nixon_defsUpTo_eq] at hd
+    cases hd with
+    | head _ => exact absurd hdr (by decide)
+    | tail _ h =>
+      cases h with
+      | head _ =>
+        intro ⟨hP, _⟩
+        exact hNotP hP
+      | tail _ h' => cases h'
+  · intro p hp
+    cases hp with
+    | head _ => exact any_concludes_republican_cl (n + 1)
+    | tail _ h => cases h
+
+/-- **Period-2 parity, every rung.** For every `k`, both pacifist
+    and nonpacifist are concluded at rung `2k`, and neither is
+    concluded at rung `2k+1`. The conclusion sequence really does
+    oscillate forever — Nixon Diamond's irresolution is structural,
+    not just visible in the first few rungs. -/
+theorem nixon_parity : ∀ k,
+    (Tower.ReflConclAt nixonTower (2 * k) "pacifist" ∧
+     Tower.ReflConclAt nixonTower (2 * k) "nonpacifist") ∧
+    (¬ Tower.ReflConclAt nixonTower (2 * k + 1) "pacifist" ∧
+     ¬ Tower.ReflConclAt nixonTower (2 * k + 1) "nonpacifist") := by
+  intro k
+  induction k with
+  | zero => exact ⟨nixon_baseline_at_rung0, nixon_post_defeat_at_rung1⟩
+  | succ m ih =>
+    have h_up_p : Tower.ReflConclAt nixonTower (2 * (m + 1)) "pacifist" := by
+      have heq : 2 * (m + 1) = 2 * m + 1 + 1 := by omega
+      rw [heq]; exact nixon_step_up_pacifist _ ih.2.2
+    have h_up_n : Tower.ReflConclAt nixonTower (2 * (m + 1)) "nonpacifist" := by
+      have heq : 2 * (m + 1) = 2 * m + 1 + 1 := by omega
+      rw [heq]; exact nixon_step_up_nonpacifist _ ih.2.1
+    have h_down_p : ¬ Tower.ReflConclAt nixonTower (2 * (m + 1) + 1) "pacifist" :=
+      nixon_step_down_pacifist _ h_up_n
+    have h_down_n : ¬ Tower.ReflConclAt nixonTower (2 * (m + 1) + 1) "nonpacifist" :=
+      nixon_step_down_nonpacifist _ h_up_p
+    exact ⟨⟨h_up_p, h_up_n⟩, ⟨h_down_p, h_down_n⟩⟩
 
 end Nixon
 end Defeater

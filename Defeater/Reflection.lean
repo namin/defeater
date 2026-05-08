@@ -94,17 +94,44 @@ theorem reflConclAt_eq (T : Tower env) (n : Nat) (a : Atom) :
   | zero => exact Iff.rfl
   | succ _ => exact Iff.rfl
 
-/-- **Reflective per-rung soundness.** At every rung, conclusions
-    hold under any env that satisfies the rung's facts and validates
-    each rule that's reflectively undefeated. Same shape as
-    `rung_sound`; uses `Closure.sound` after unfolding via
-    `reflConclAt_eq`. -/
+/-- **Reflective conditional rung soundness.** At every rung,
+    conclusions hold under any env that satisfies the rung's facts
+    and validates each rule that's reflectively undefeated. Same
+    shape — and same caveat — as `rung_sound`: this is conditional
+    on the second hypothesis, not derived from the certificates.
+    See `refl_undefeated_valid_under_coverage` below for the
+    bridge. -/
 theorem refl_rung_sound {T : Tower env} {n : Nat}
     (hfacts : ∀ a ∈ T.factsUpTo n, env a)
     (hrules : ∀ r ∈ T.rules, T.isUndefeatedRefl n r → r.validUnder env)
     {a : Atom} (hc : ReflConclAt T n a) : env a := by
   rw [reflConclAt_eq] at hc
   exact Closure.sound hfacts hrules hc
+
+/-- **Reflective bridge theorem.** At rung n+1, if every env-invalid
+    rule has a reflectively-firing defeater targeting it (where
+    "firing" means trigger concluded at rung n and no undercutter
+    concluded at rung n), then every rule undefeated at rung n+1 is
+    valid under env. Combined with `refl_rung_sound`, this lets us
+    discharge the second hypothesis from the certificates and a
+    coverage condition.
+
+    Note: the rung-0 baseline (`isUndefeatedRefl T 0 r = True` for
+    all r) admits no defeaters — coverage there would require all
+    rules to be valid under env, which is the "no defeaters yet"
+    case. The bridge is at rung n+1. -/
+theorem refl_undefeated_valid_under_coverage {T : Tower env} {n : Nat}
+    (coverage : ∀ r ∈ T.rules, ¬ r.validUnder env →
+      ∃ d ∈ T.defsUpTo (n + 1),
+        d.rule = r ∧
+        ReflConclAt T n d.trigger ∧
+        (∀ u ∈ d.undercutters, ¬ ReflConclAt T n u)) :
+    ∀ r ∈ T.rules, T.isUndefeatedRefl (n + 1) r → r.validUnder env := by
+  intro r hr hund
+  apply Classical.byContradiction
+  intro h_inv
+  obtain ⟨d, hd_mem, hd_rule, hd_trigger, hd_uc⟩ := coverage r hr h_inv
+  exact hund d hd_mem hd_rule ⟨hd_trigger, hd_uc⟩
 
 end Tower
 

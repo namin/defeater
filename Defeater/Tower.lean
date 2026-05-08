@@ -101,18 +101,18 @@ inductive ConclAt (T : Tower env) (n : Nat) : Atom → Prop where
       (∀ p ∈ r.prems, ConclAt T n p) →
       ConclAt T n r.concl
 
-/-- Headline metatheorem (per-rung soundness).
+/-- **Conditional rung soundness.**
 
     At every rung, conclusions hold under any env that:
     - satisfies the facts admitted up to that rung,
     - validates each rule that remains undefeated at that rung.
 
-    The defeasibility certificates `d.defeats` are what the kernel
-    checked at admission; they justify, in the env at hand, the
-    second hypothesis below — undefeated rules really are valid in
-    env. The proof is by induction over the derivation; each step is
-    discharged either by the fact hypothesis or by the rule's
-    validity. -/
+    This theorem is *conditional* on the second hypothesis: it does
+    not derive `r.validUnder env` for undefeated rules from the
+    defeasibility certificates stored on each defeater. The kernel
+    checked those certificates at admission, but to discharge the
+    second hypothesis from them we need a coverage condition — see
+    `undefeated_valid_under_coverage` below. -/
 theorem rung_sound {T : Tower env} {n : Nat}
     (hfacts : ∀ a ∈ T.factsUpTo n, env a)
     (hrules : ∀ r ∈ T.rules, T.isUndefeated n r → r.validUnder env)
@@ -121,6 +121,25 @@ theorem rung_sound {T : Tower env} {n : Nat}
   | fact h => exact hfacts _ h
   | rule r hr hund _ ih =>
     exact hrules r hr hund (fun p hp => ih p hp)
+
+/-- **Bridge theorem.** If every rule that fails to be valid under
+    env has, at rung n, a firing defeater targeting it, then every
+    rule undefeated at rung n is valid under env. Combined with
+    `rung_sound`, this lets us discharge the second hypothesis from
+    the certificates and a coverage condition.
+
+    Proof: contrapositive. Suppose r is undefeated and ¬ r.validUnder env.
+    Coverage gives us a firing defeater of r; isUndefeated says no
+    such defeater exists; contradiction. -/
+theorem undefeated_valid_under_coverage {T : Tower env} {n : Nat}
+    (coverage : ∀ r ∈ T.rules, ¬ r.validUnder env →
+      ∃ d ∈ T.defsUpTo n, d.rule = r ∧ d.fires T n) :
+    ∀ r ∈ T.rules, T.isUndefeated n r → r.validUnder env := by
+  intro r hr hund
+  apply Classical.byContradiction
+  intro h_inv
+  obtain ⟨d, hd_mem, hd_rule, hd_fires⟩ := coverage r hr h_inv
+  exact hund d hd_mem hd_rule hd_fires
 
 /-! ## Stabilization
 

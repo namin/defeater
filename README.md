@@ -81,10 +81,17 @@ versions are flagged under *Open questions*.
     rule `r` at rung `n`.
   - `Tower.ConclAt T n`: level-indexed derivability —
     forward chaining at rung `n` using only undefeated rules.
-  - `Tower.rung_sound`: **headline metatheorem.** At every rung,
-    conclusions hold under any env that satisfies the rung's
-    facts and validates its undefeated rules. Proof: induction
-    over the derivation.
+  - `Tower.rung_sound`: **conditional rung soundness.** At every
+    rung, conclusions hold under any env that (i) satisfies the
+    rung's facts and (ii) validates its undefeated rules. The
+    theorem is *conditional* on (ii) — the certificates stored on
+    each defeater are not used in this proof.
+  - `Tower.undefeated_valid_under_coverage`: **bridge theorem.**
+    Under a *coverage* condition (every env-invalid rule has a
+    firing defeater targeting it), every undefeated rule is valid
+    under env. Combined with `rung_sound`, the certificates earn
+    their keep — they justify the validity hypothesis when
+    coverage holds.
   - `Tower.ConclAt_succ_of_empty`: one-step stabilization — if no
     new facts or defeaters are admitted at rung n+1, conclusions
     at rung n+1 coincide with conclusions at rung n.
@@ -135,8 +142,14 @@ versions are flagged under *Open questions*.
   - `Tower.isUndefeatedRefl`: standalone form of the reflective
     undefeated predicate.
   - `Tower.reflConclAt_eq`: `ReflConclAt T n = Closure under isUndefeatedRefl`.
-  - `Tower.refl_rung_sound`: **reflective per-rung soundness** —
-    same shape as `rung_sound`, with reflective firing.
+  - `Tower.refl_rung_sound`: **reflective conditional rung
+    soundness** — same shape and same caveat as `rung_sound`.
+  - `Tower.refl_undefeated_valid_under_coverage`: **reflective
+    bridge theorem.** Under a coverage condition (every env-invalid
+    rule has a reflectively-firing defeater), undefeated rules are
+    valid under env. Combined with `refl_rung_sound`, the
+    certificates carry the validity hypothesis non-trivially when
+    coverage holds (see `ReflDemo.reflDemo_rung1_sound`).
 
 - **`Defeater/ReflDemo.lean`** — reflective Tweety, end-to-end.
   - Two rules: `bird ⇒ flies`, `penguin ⇒ cantFly`.
@@ -150,11 +163,19 @@ versions are flagged under *Open questions*.
     defeated; `flies` is not concluded.
   - `rung1_concludes_cantFly`: defeating one rule doesn't disturb
     others; `penguin ⇒ cantFly` stays active.
+  - `reflDemo_rung1_sound`: **end-to-end soundness via the bridge.**
+    Here the certificates *earn their keep*: `birdFliesRule` is
+    *invalid* under `reflEnv` (env "flies" = F), and the coverage
+    condition at rung 1 produces `cantFlyDefeater` as its firing
+    witness. Combined with `refl_undefeated_valid_under_coverage`
+    and `refl_rung_sound`, this yields env-soundness for every
+    rung-1 conclusion without postulating rule validity by hand.
 
   This is the keynote thesis instantiated literally: the upper rung
   observes the lower rung's *inferences* and intervenes. The
   syntactic version of Tweety can't tell this story — its defeater
-  fires on a primitive assertion; here the trigger is a derivation.
+  fires on a primitive assertion; here the trigger is a derivation,
+  and the certificate non-trivially constrains the env.
 
 - **`Defeater/Trust.lean`** — a trust hierarchy / source-credibility
   cascade. The rung index is *not* admission order here — it's an
@@ -179,15 +200,17 @@ versions are flagged under *Open questions*.
   - Two rules: `Quaker ⇒ pacifist`, `Republican ⇒ nonpacifist`.
   - Two defeaters: each rule's conclusion is the other defeater's
     trigger.
-  - `nixon_credulous_at_rung0`: at rung 0 (before reflective
-    defeating), both conclusions hold — the credulous reading.
-  - `nixon_skeptical_at_rung1`: at rung 1, both rules are defeated
-    reflectively, neither conclusion holds — the skeptical reading.
-  - `nixon_diamond_irresolution`: the framework refuses to choose;
-    the credulous and skeptical readings live at adjacent rungs and
-    the conclusion sequence oscillates.
+  - `nixon_baseline_at_rung0`: at rung 0 (pre-defeat), both
+    conclusions hold from the asserted facts. *Not* the formal
+    credulous extension — our substrate has no extension semantics.
+  - `nixon_post_defeat_at_rung1`: at rung 1, both rules are defeated
+    reflectively, neither conclusion holds.
+  - `nixon_diamond_irresolution`: rung 0 vs rung 1 contrast.
+  - `nixon_parity`: **∀ k**, both concluded at rung 2k, neither at
+    rung 2k+1. The conclusion sequence really does oscillate
+    forever, not just for the witnessed rungs.
 
-  Same structural shape as `Oscillate.lean`, but with the textbook
+  Same structural shape as `Oscillate.lean` with the textbook
   semantic gloss: the canonical case where defeasible logic has no
   preferred answer is exactly the case where reflective firing
   oscillates.
@@ -201,7 +224,10 @@ versions are flagged under *Open questions*.
     inference of `y`; `x ⇒ y` is defeated.
   - `rung2_concludes_y`: defeater doesn't fire (since `y ∉ ReflConclAt 1`);
     `x ⇒ y` is undefeated again; `y` is re-derived.
-  - `reflective_oscillation`: the period-2 witness.
+  - `reflective_oscillation`: the period-2 witness, three rungs.
+  - `osc_step_up` / `osc_step_down`: parametric step lemmas.
+  - `osc_parity`: **∀ k**, `y` concluded at rung 2k and not
+    concluded at rung 2k+1. Period-2 forever, by induction.
 
   No new admissions happen past rung 0 — yet the conclusion sequence
   oscillates forever. The syntactic stabilization theorem
