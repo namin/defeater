@@ -156,6 +156,24 @@ versions are flagged under *Open questions*.
   syntactic version of Tweety can't tell this story — its defeater
   fires on a primitive assertion; here the trigger is a derivation.
 
+- **`Defeater/Nixon.lean`** — the Nixon Diamond (the textbook
+  example of *symmetric* defeasible conflict since Reiter).
+  - Two rules: `Quaker ⇒ pacifist`, `Republican ⇒ nonpacifist`.
+  - Two defeaters: each rule's conclusion is the other defeater's
+    trigger.
+  - `nixon_credulous_at_rung0`: at rung 0 (before reflective
+    defeating), both conclusions hold — the credulous reading.
+  - `nixon_skeptical_at_rung1`: at rung 1, both rules are defeated
+    reflectively, neither conclusion holds — the skeptical reading.
+  - `nixon_diamond_irresolution`: the framework refuses to choose;
+    the credulous and skeptical readings live at adjacent rungs and
+    the conclusion sequence oscillates.
+
+  Same structural shape as `Oscillate.lean`, but with the textbook
+  semantic gloss: the canonical case where defeasible logic has no
+  preferred answer is exactly the case where reflective firing
+  oscillates.
+
 - **`Defeater/Oscillate.lean`** — reflective non-stabilization
   counterexample.
   - Rules: `z ⇒ x` and `x ⇒ y`. A defeater of `x ⇒ y` triggered by
