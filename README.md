@@ -8,7 +8,7 @@ kernel-blessed by an independent metalanguage certificate.
 > **Climber checks theory construction; defeater checks
 > theory qualification.**
 
-The proposer (an LLM, in the full version) does not propose theorems
+The proposer (hand-written in this artifact; an LLM in the full version) does not propose theorems
 or tactics. It proposes **new sound exception schemas** — schemas
 with defeasibility certificates — and the kernel admits or refuses
 based on whether the certificate type-checks against the metalanguage

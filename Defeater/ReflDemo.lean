@@ -241,10 +241,11 @@ theorem refl_coverage_at_rung_1 :
     | tail _ h' => cases h'
 
 /-- **End-to-end rung-1 soundness for the reflective Tweety demo.**
-    Every conclusion at rung 1 holds in `reflEnv`. The certificates
-    do real work here: the `cantFlyDefeater`'s defeasibility
-    certificate, combined with the coverage condition, discharges
-    the validity hypothesis of `refl_rung_sound`. -/
+    Every conclusion at rung 1 holds in `reflEnv`. Soundness flows
+    through the coverage condition (`refl_coverage_at_rung_1`), which
+    supplies the validity hypothesis of `refl_rung_sound`; the stored
+    defeasibility certificate gates admission of `cantFlyDefeater` but
+    is not itself consumed by this proof. -/
 theorem reflDemo_rung1_sound :
     ∀ a, Tower.ReflConclAt reflTower 1 a → reflEnv a := by
   intro a hc
