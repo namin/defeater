@@ -42,7 +42,7 @@ causally downward (Smith's connection put to non-monotonic use).
 
 ## Status
 
-Built. The four files compile end-to-end on Lean 4.29.1 with no
+Built. The four files compile end-to-end on Lean 4.30.0 with no
 `sorry` and no added axioms (`lake build`). The substrate is the
 minimal version of the design space described below; richer
 versions are flagged under *Open questions*.
